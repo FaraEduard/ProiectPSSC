@@ -1,3 +1,15 @@
-﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
-Console.WriteLine("Buna");
+﻿using ShoppingCartApp;
+
+namespace ProiectPSSC
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            // Inițiem și apelăm aplicația PlasareComanda
+            var plasareComanda = new PlasareComanda();
+            plasareComanda.Start();
+        }
+    }
+}
+
