@@ -10,7 +10,6 @@ La final datele vor fi salvate in baza de date si/sau spre consola.
 TASKS:Workflows - Preluare comanda, modificare comanda, anulare comanda
 
 1. Edi - Preluare Comanda
-- 26.11.2024 - Incep sa fac Modelele
 
 
 
