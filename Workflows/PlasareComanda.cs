@@ -2,6 +2,7 @@ using System;
 using Examples.Domain.Models;
 using Examples.Domain.Operations;
 using Examples.Domain.Exceptions;
+using ProiectPSSC;
 
 namespace ShoppingCartApp
 {
@@ -46,9 +47,13 @@ namespace ShoppingCartApp
                         break;
 
                     case "3":
-                        PlaceOrder(cartService);
+                        var pendingOrder = PlaceOrder(cartService, validatedCustomer.Nume);
+                        if (pendingOrder != null)
+                        {
+                            Program.Orders.Add(pendingOrder);
+                            Console.WriteLine($"Comanda a fost adăugată cu succes. ID: {pendingOrder.OrderId}");
+                        }
                         break;
-
                     case "4":
                         cartService.VerifyCart();  // Verifică coșul
                         break;
@@ -69,6 +74,14 @@ namespace ShoppingCartApp
                 }
 
             } while (input != "5");
+
+            //Securizare plata
+
+            //Generare factura
+
+            //Initializare Livrare
+
+            //Confirmare primire comanda 
         }
 
         private UnvalidatedCustomer ReadCustomerData()
@@ -153,7 +166,7 @@ namespace ShoppingCartApp
             }
         }
 
-        static void PlaceOrder(CartService cartService)
+                static PendingOrder? PlaceOrder(CartService cartService, string customerName)
         {
             Console.Clear();
             Console.WriteLine("=== Plasare comanda ===");
@@ -161,12 +174,20 @@ namespace ShoppingCartApp
             try
             {
                 cartService.PlaceOrder();
+
+                // Creăm un obiect PendingOrder
+                var orderId = Guid.NewGuid();
+                var orderDate = DateTime.Now;
+
                 Console.WriteLine("Comanda a fost plasata cu succes. Cosul a fost golit.");
+                return new PendingOrder(orderId, customerName, orderDate);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Eroare la plasarea comenzii: {ex.Message}");
+                return null; // Returnăm null dacă procesarea eșuează
             }
         }
+
     }
 }
