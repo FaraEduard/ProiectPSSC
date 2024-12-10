@@ -62,5 +62,49 @@ namespace Examples.Domain.Operations
                 throw new InvalidCartOperationException("Atentie, clientul nu este validat!");
             }
         }
+        public void UpdateProductQuantity(IOrder order, ProductId productId, int newQuantity)
+        {
+            // Găsim produsul din coș
+            var cartItem = _cart.FirstOrDefault(item => item.Id == productId);
+
+            if (cartItem == null)
+            {
+                throw new Exception("Produsul nu a fost găsit în coș.");
+            }
+
+            if (newQuantity <= 0)
+            {
+                // Dacă noua cantitate este 0 sau mai mică, eliminăm produsul din coș
+                _cart.Remove(cartItem);
+                Console.WriteLine("Produsul a fost eliminat din coș.");
+            }
+            else
+            {
+                // Actualizează cantitatea produsului
+                var updatedCartItem = cartItem with { Stock = new Stock(newQuantity) }; // Asumăm că Stock poate fi setat cu un string
+
+                // Găsește indexul produsului vechi în listă și îl înlocuiește cu produsul actualizat
+                int index = _cart.IndexOf(cartItem);
+                if (index != -1)
+                {
+                    _cart[index] = updatedCartItem;
+                    Console.WriteLine("Cantitatea produsului a fost actualizată.");
+                }
+                else
+                {
+                    Console.WriteLine("Eroare la actualizarea produsului.");
+                }
+            }
+        }
+        /*private void DisplayCartItems(IOrder order)
+        {
+            Console.WriteLine("\nProdusele din coș:");
+            foreach (var product in order.Cart)
+            {
+                Console.WriteLine($"- ID: {product.ProductId} | Nume: {product.Name} | Cantitate: {product.Stock.Quantity}");
+            }
+        }
+        */
+
     }
 }
