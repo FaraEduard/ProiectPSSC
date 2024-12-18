@@ -120,25 +120,39 @@ namespace ShoppingCartApp
 
         static void AddProductToCart(CartService cartService)
         {
+            Console.Clear();
+            Console.WriteLine("=== Adauga produs in cos ===");
+
+            Console.Write("Numele produsului: ");
+            string name = Console.ReadLine() ?? "N/A";
+
+            // Cautam Id si pret dupa numele produsului.
             try
             {
-                Console.Clear();
-                Console.WriteLine("=== Adauga produs in cos ===");
+                int i=0;
+                foreach(var element in Program.Prices_DB)
+                {
+                    if(element.Nume == name)
+                    {
+                        string priceInput = element.Pret.ToString();
+                        int Id = element.Id;
 
-                Console.Write("Numele produsului: ");
-                string name = Console.ReadLine() ?? "N/A";
+                        Console.Write("Cantitatea produsului dorit: ");
+                        string stockInput = Console.ReadLine() ?? "N/A";
 
-                Console.Write("Pretul produsului: ");
-                string priceInput = Console.ReadLine() ?? "N/A";
-                string result = priceInput.Replace('.', ',');
+                        var unvalidatedProduct = new Product.UnvalidatedProduct(name, priceInput, stockInput);
+                        unvalidatedProduct.Id = Id;
 
-                Console.Write("Stocul produsului: ");
-                string stockInput = Console.ReadLine() ?? "N/A";
+                        cartService.AddProduct(unvalidatedProduct);
 
-                var unvalidatedProduct = new Product.UnvalidatedProduct(Guid.NewGuid(), name, result, stockInput);
-                cartService.AddProduct(unvalidatedProduct);
-
-                Console.WriteLine("Produsul a fost adaugat in cos.");
+                        Console.WriteLine($"- {unvalidatedProduct.Id} | {unvalidatedProduct.Name} | Pret: {unvalidatedProduct.Price:0.##} | Cantitate: {unvalidatedProduct.Stock}");
+                        Console.WriteLine("Produsul a fost adaugat in cos. ");
+                        i=10;
+                        break;
+                    }
+                }
+                if(i != 10)
+                throw new Exception("Produsul nu exista.");
             }
             catch (Exception ex)
             {
@@ -161,7 +175,7 @@ namespace ShoppingCartApp
                 Console.WriteLine("Produsele din cos:");
                 foreach (var product in cart.Products)
                 {
-                    Console.WriteLine($"- {product.Name} | Pret: {product.Price.Value:0.##} | Stoc: {product.Stock.Value}");
+                    Console.WriteLine($"- {product.Id} | {product.Name} | Pret: {product.Price.Value:0.##} | Stoc: {product.Stock.Value}");
                 }
             }
         }
@@ -173,11 +187,13 @@ namespace ShoppingCartApp
 
             try
             {
-                cartService.PlaceOrder();
-
                 // Creăm un obiect PendingOrder
                 var orderId = Guid.NewGuid();
                 var orderDate = DateTime.Now;
+
+                //In PlaceOrder are loc si inserarea in DB
+                cartService.PlaceOrder(orderId, orderDate);
+
 
                 Console.WriteLine("Comanda a fost plasata cu succes. Cosul a fost golit.");
                 return new PendingOrder(orderId, customerName, orderDate);

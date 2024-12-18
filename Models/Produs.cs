@@ -6,11 +6,17 @@ namespace Examples.Domain.Models
     {
         public interface IProduct { }
 
-        public record UnvalidatedProduct(Guid Id, string Name, string Price, string Stock) : IProduct;
+        public record UnvalidatedProduct(string Name, string Price, string Stock) : IProduct
+        {
+            public int Id;
+        }
 
         public record ValidatedProduct(ProductId Id, string Name, Price Price, Stock Stock) : IProduct;
 
-        public record UnavailableProduct(Guid Id, string Name, string Reason) : IProduct;
+        public record UnavailableProduct( string Name, string Reason) : IProduct
+        {
+            int Id;
+        }
     }
 
     public record UnvalidatedProduct(string Name, string Price, string Stock);

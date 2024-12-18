@@ -5,11 +5,11 @@ namespace Examples.Domain.Models
 {
     public record ProductId
     {
-        public Guid Value { get; }
+        public int Value { get; }
 
-        public ProductId(Guid value)
+        public ProductId(int value)
         {
-            if (value == Guid.Empty)
+            if (value == 0)
             {
                 throw new InvalidProductIdException("Product ID cannot be empty.");
             }

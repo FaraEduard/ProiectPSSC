@@ -62,4 +62,5 @@ namespace Examples.Domain.Models
             return new CanceledOrder(OrderId, CustomerName, OrderDate);
         }
     }
+
 }

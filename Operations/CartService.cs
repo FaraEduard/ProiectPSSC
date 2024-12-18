@@ -3,6 +3,8 @@ using Examples.Domain.Exceptions;
 using System;
 using System.Collections.Generic;
 using Examples.Domain.Operations;
+using System.Linq.Expressions;
+using ShoppingCartApp;
 
 namespace Examples.Domain.Operations
 {
@@ -10,6 +12,14 @@ namespace Examples.Domain.Operations
     {
         private readonly List<Product.ValidatedProduct> _cart = new();
         private ICustomer _customer;
+
+        //int totalPrice
+
+        // void calculatePrice()
+        //{
+        //    foreach(var element : _cart)
+        //    {totalPrice = totalprice + e.Price * cantitate}
+        //}
 
         // Constructorul va primi un customer validat
         public CartService(ICustomer customer)
@@ -30,21 +40,44 @@ namespace Examples.Domain.Operations
             return (_cart.AsReadOnly(), _cart.Count);
         }
 
-        public void PlaceOrder()
+        public decimal Calculate_Price()
+        {
+            decimal total =0;
+
+            foreach(var prod in _cart)
+            total = total + (prod.Price.Value * prod.Stock.Value);
+
+            return total;
+        }
+
+        public void PlaceOrder(Guid order_id, DateTime data)
         {
             if (_cart.Count == 0)
             {
                 throw new InvalidCartOperationException("Nu poti plasa comanda pentru un cos gol.");
             }
 
-            // Verifică dacă clientul este validat înainte de a permite plasarea comenzii
             if (_customer is not ValidatedCustomer)
             {
                 throw new InvalidCustomerException("Clientul nu este validat. Nu se poate plasa comanda.");
             }
 
-            // O dată validate toate obiectele din cos și inclusiv cosul
-            // Aici trebuie continuat workflow-ul pentru plasarea comenzii și scrierea în baza de date
+            // Se insereaza in baza de date fiecare item
+            foreach(var produs in _cart)
+            {
+                var id_produs = produs.Id;
+                var nume_produs = produs.Name;
+                var pret_produs = produs.Price.Value;
+                var cantitate_produs = produs.Stock.Value;
+
+                DatabaseAccess.InsertProduct(id_produs.Value,nume_produs,pret_produs,cantitate_produs,order_id.ToString());
+            }
+
+            //Aici se insereaza in DB Comanda
+            var nume_customer = _customer.Nume;
+            string status = "Pending";
+            var pret = Calculate_Price();
+            DatabaseAccess.InsertOrder(order_id.ToString(), nume_customer, data, status, pret);
 
             _cart.Clear();
         }

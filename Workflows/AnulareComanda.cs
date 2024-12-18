@@ -29,7 +29,11 @@ namespace ShoppingCartApp
                     {
                         // Anulăm comanda și actualizăm starea în lista globală
                         var canceledOrder = order.Cancel();
+
                         Program.Orders.Remove(order); // Eliminăm comanda curentă                  
+
+                        Program.Orders.Remove(order); // Eliminăm comanda curentă
+
                         Program.Orders.Add(canceledOrder); // Adăugăm comanda anulată
 
                         Console.WriteLine($"Comanda cu ID-ul {order.OrderId} a fost anulată cu succes.");
