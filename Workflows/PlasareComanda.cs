@@ -30,8 +30,8 @@ namespace ShoppingCartApp
                 Console.WriteLine("===== Meniu =====");
                 Console.WriteLine("1. Adauga produs in cos");
                 Console.WriteLine("2. Vizualizare cos");
-                Console.WriteLine("3. Plasare comanda");
-                Console.WriteLine("4. Verificare cos");
+                Console.WriteLine("3. Verificare cos");
+                Console.WriteLine("4. Plasare comanda");
                 Console.WriteLine("5. Iesire");
                 Console.Write("Alege o optiune: ");
                 input = Console.ReadLine();
@@ -47,15 +47,16 @@ namespace ShoppingCartApp
                         break;
 
                     case "3":
+                        cartService.VerifyCart();  // Verifică coșul
+                        break;
+
+                    case "4":
                         var pendingOrder = PlaceOrder(cartService, validatedCustomer.Nume);
                         if (pendingOrder != null)
                         {
                             Program.Orders.Add(pendingOrder);
                             Console.WriteLine($"Comanda a fost adăugată cu succes. ID: {pendingOrder.OrderId}");
                         }
-                        break;
-                    case "4":
-                        cartService.VerifyCart();  // Verifică coșul
                         break;
 
                     case "5":
@@ -180,7 +181,7 @@ namespace ShoppingCartApp
             }
         }
 
-                static PendingOrder? PlaceOrder(CartService cartService, string customerName)
+        static PendingOrder? PlaceOrder(CartService cartService, string customerName)
         {
             Console.Clear();
             Console.WriteLine("=== Plasare comanda ===");
@@ -191,9 +192,16 @@ namespace ShoppingCartApp
                 var orderId = Guid.NewGuid();
                 var orderDate = DateTime.Now;
 
-                //In PlaceOrder are loc si inserarea in DB
+                //In PlaceOrder are loc si inserarea in DB a comenzii cat si a produselor
                 cartService.PlaceOrder(orderId, orderDate);
 
+                //Updatarea Comenzilor din DB in program
+                Program.Orders_DB.Clear();
+                Program.Orders_DB = DatabaseAccess.GetOrders();
+
+                //Updatarea Itemelor din DB in program
+                Program.Products_DB.Clear();
+                Program.Products_DB = DatabaseAccess.GetProducts();
 
                 Console.WriteLine("Comanda a fost plasata cu succes. Cosul a fost golit.");
                 return new PendingOrder(orderId, customerName, orderDate);

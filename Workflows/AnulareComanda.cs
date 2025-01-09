@@ -21,22 +21,26 @@ namespace ShoppingCartApp
 
             if (Guid.TryParse(orderIdInput, out Guid orderId))
             {
-                // Găsim comanda după ID în lista globală din Program
-                var order = Program.Orders.Find(o => o.OrderId == orderId);
-                if (order != null)
+                string order_id_string = orderId.ToString();
+
+                var order_db = Program.Orders_DB.Find(o => o.ID == order_id_string);
+
+                //Cautare in comenzile incarcarte in baza de date
+                if(order_db != null)
                 {
                     try
                     {
-                        // Anulăm comanda și actualizăm starea în lista globală
-                        var canceledOrder = order.Cancel();
 
-                        Program.Orders.Remove(order); // Eliminăm comanda curentă                  
+                        //DatabaseAccess.RemoveOrder(order_id_string); - In caz ca se doreste stergerea comenzii.
+                        //DatabaseAccess.RemoveProductsByOrderId(order_id_string); - In caz ca se doreste stergerea itemelor dupa order id.
 
-                        Program.Orders.Remove(order); // Eliminăm comanda curentă
+                        //Modificarea statusului comenzii (itemele raman in DB)
+                        DatabaseAccess.UpdateOrderStatusToCanceled(order_id_string);
 
-                        Program.Orders.Add(canceledOrder); // Adăugăm comanda anulată
+                        Program.Orders_DB.Clear();
+                        Program.Orders_DB = DatabaseAccess.GetOrders();
 
-                        Console.WriteLine($"Comanda cu ID-ul {order.OrderId} a fost anulată cu succes.");
+                        Console.WriteLine($"Comanda cu ID-ul {order_id_string} a fost anulată cu succes.");
                     }
                     catch (InvalidOperationException ex)
                     {
@@ -60,9 +64,9 @@ namespace ShoppingCartApp
         private void DisplayOrders()
         {
             Console.WriteLine("Comenzile disponibile:");
-            foreach (var order in Program.Orders)
+            foreach (var order in Program.Orders_DB)
             {
-                Console.WriteLine($"- ID: {order.OrderId} | Status: {order.Status} | Client: {order.CustomerName} | Data: {order.OrderDate:dd/MM/yyyy}");
+                Console.WriteLine($"- ID: {order.ID} | Status: {order.Status} | Client: {order.NumeC_ustomer} | Data: {order.Data:dd/MM/yyyy}");
             }
         }
     }
