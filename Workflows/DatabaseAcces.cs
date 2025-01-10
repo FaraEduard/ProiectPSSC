@@ -1,6 +1,9 @@
 using System;
 using Microsoft.Data.SqlClient;
 using ConsoleApp3.Models_For_Database;
+using ProiectPSSC;
+using Examples.Domain.Models;
+using Examples.Domain.Operations;
 
 namespace ShoppingCartApp
 {
@@ -308,6 +311,236 @@ namespace ShoppingCartApp
                 }
             }
         }
+
+        public static void RemoveProductByNameAndOrderId(string productName, string orderId)
+        {
+            string deleteQuery = "DELETE FROM Produse WHERE Nume = @Nume AND Order_Id = @Order_Id";
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                try
+                {
+                    connection.Open();
+
+                    using (SqlCommand command = new SqlCommand(deleteQuery, connection))
+                    {
+                        // Adăugare parametri pentru prevenirea SQL Injection
+                        command.Parameters.AddWithValue("@Nume", productName);
+                        command.Parameters.AddWithValue("@Order_Id", orderId);
+
+                        int rowsAffected = command.ExecuteNonQuery();
+
+                        if (rowsAffected > 0)
+                        {
+                            Console.WriteLine($"Produsul '{productName}' asociat cu Order_Id-ul '{orderId}' a fost șters cu succes!");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Produsul '{productName}' cu Order_Id-ul '{orderId}' nu a fost găsit.");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Eroare la ștergerea produsului: " + ex.Message);
+                }
+            }
+        }
+
+        public static void CancelOrderIfPriceIsZero(string orderId)
+        {
+            string selectQuery = "SELECT Pret FROM Orders WHERE Id = @Order_Id";
+            string updateQuery = "UPDATE Orders SET Status = @Status WHERE Id = @Order_Id";
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                try
+                {
+                    connection.Open();
+
+                    decimal pret = 0;
+
+                    // Verificare preț
+                    using (SqlCommand selectCommand = new SqlCommand(selectQuery, connection))
+                    {
+                        selectCommand.Parameters.AddWithValue("@Order_Id", orderId);
+
+                        using (SqlDataReader reader = selectCommand.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                pret = reader.GetDecimal(0);
+                            }
+                        }
+                    }
+
+                    // Dacă prețul este 0, actualizează statusul la "Canceled"
+                    if (pret == 0)
+                    {
+                        using (SqlCommand updateCommand = new SqlCommand(updateQuery, connection))
+                        {
+                            updateCommand.Parameters.AddWithValue("@Status", "Canceled");
+                            updateCommand.Parameters.AddWithValue("@Order_Id", orderId);
+
+                            int rowsAffected = updateCommand.ExecuteNonQuery();
+
+                            if (rowsAffected > 0)
+                            {
+                                Console.WriteLine($"Comanda cu Order_Id '{orderId}' a fost anulată deoarece prețul este 0.");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Nu s-a putut actualiza statusul comenzii cu Order_Id '{orderId}'.");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Prețul comenzii cu Order_Id '{orderId}' nu este 0. Statusul nu a fost modificat.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Eroare: " + ex.Message);
+                }
+            }
+        }
+
+
+        public static void AddProductInOrder(string orderId)
+        {
+            Console.Write("Numele produsului: ");
+            string name = Console.ReadLine() ?? "N/A";
+
+            // Cautam Id si pret dupa numele produsului.
+            try
+            {
+                int i=0;
+                foreach(var element in Program.Prices_DB)
+                {
+                    if(element.Nume == name)
+                    {
+                        string priceInput = element.Pret.ToString();
+                        int Id = element.Id;
+
+                        Console.Write("Cantitatea produsului dorit: ");
+                        string stockInput = Console.ReadLine() ?? "N/A";
+                        int stockk = Convert.ToInt32(stockInput);
+
+                        var unvalidatedProduct = new Product.UnvalidatedProduct(name, priceInput, stockInput);
+                        unvalidatedProduct.Id = Id;
+
+                        var validationService = new ProductValidationService();
+                        var validatedProduct = validationService.ValidateProduct(unvalidatedProduct);
+
+                        Console.WriteLine($"- {unvalidatedProduct.Id} | {unvalidatedProduct.Name} | Pret: {unvalidatedProduct.Price:0.##} | Cantitate: {unvalidatedProduct.Stock}");
+
+                        string insertQuery = "INSERT INTO Produse (Id, Nume, Pret, Cantitate, Order_Id) VALUES (@ID, @Nume, @Pret, @Cantitate, @Order_Id)";
+
+                        using (SqlConnection connection = new SqlConnection(connectionString))
+                        {
+                            try
+                            {
+                                connection.Open();
+
+                                using (SqlCommand command = new SqlCommand(insertQuery, connection))
+                                {
+                                    // Adăugare parametri pentru prevenirea SQL Injection
+                                    command.Parameters.AddWithValue("@Id", Id);
+                                    command.Parameters.AddWithValue("@Nume", name);
+                                    command.Parameters.AddWithValue("@Pret", element.Pret);
+                                    command.Parameters.AddWithValue("@Cantitate", stockk);
+                                    command.Parameters.AddWithValue("@Order_Id", orderId);
+
+                                    int rowsAffected = command.ExecuteNonQuery();
+
+                                    if (rowsAffected > 0)
+                                    {
+                                        Console.WriteLine($"Produsul '{unvalidatedProduct.Name}' a fost adăugat cu succes!");
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Adăugarea produsului a eșuat.");
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine("Eroare la adăugarea produsului: " + ex.Message);
+                            }
+                        }
+
+                        i=10;
+                        break;
+                        }
+                    }
+                    if(i != 10)
+                    throw new Exception("Produsul nu exista.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Eroare la adaugarea produsului: {ex.Message}");
+                }
+
+        }
+
+
+        public static void UpdateOrderTotal(string orderId)
+        {
+            string selectQuery = "SELECT Cantitate, Pret FROM Produse WHERE Order_Id = @Order_Id";
+            string updateQuery = "UPDATE Orders SET Pret = @Total WHERE Id = @Order_Id";
+
+            decimal total = 0;
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                try
+                {
+                    connection.Open();
+
+                    // Preluare produse asociate Order_Id
+                    using (SqlCommand selectCommand = new SqlCommand(selectQuery, connection))
+                    {
+                        selectCommand.Parameters.AddWithValue("@Order_Id", orderId);
+
+                        using (SqlDataReader reader = selectCommand.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                int cantitate = reader.GetInt32(0);
+                                decimal pret = reader.GetDecimal(1);
+
+                                // Calcularea valorii produsului și adăugarea la total
+                                total += cantitate * pret;
+                            }
+                        }
+                    }
+
+                    // Actualizare valoare totală în tabelul Orders
+                    using (SqlCommand updateCommand = new SqlCommand(updateQuery, connection))
+                    {
+                        updateCommand.Parameters.AddWithValue("@Total", total);
+                        updateCommand.Parameters.AddWithValue("@Order_Id", orderId);
+
+                        int rowsAffected = updateCommand.ExecuteNonQuery();
+
+                        if (rowsAffected > 0)
+                        {
+                            Console.WriteLine($"Valoarea totală a comenzii cu Order_Id '{orderId}' a fost actualizată la {total:C}!");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Nu s-a putut actualiza valoarea totală a comenzii cu Order_Id '{orderId}'.");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Eroare: " + ex.Message);
+                }
+            }
+        }
+
 
     }
 }
