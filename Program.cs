@@ -3,7 +3,6 @@ using Azure.Messaging.ServiceBus;
 using Microsoft.Data.SqlClient;
 using Examples.Domain.Models;
 using ConsoleApp3.Models_For_Database;
-using ShoppingCartApp;
 
 namespace ProiectPSSC
 {
@@ -27,6 +26,9 @@ namespace ProiectPSSC
         { 
             var plasareComanda = new PlasareComanda();
             plasareComanda.Start();
+
+            var modicareComanda = new ModificareComanda();
+            modicareComanda.Start();
 
             var orderCancellation = new OrderCancellation();
             orderCancellation.Start();
